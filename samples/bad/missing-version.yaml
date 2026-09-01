@@ -1,0 +1,22 @@
+metadata:
+  id: no-version-doc
+  type: GuidanceCatalog
+  description: "Document missing gemara-version field"
+  author:
+    id: "test-org"
+    name: "Test Organization"
+    type: "Software Assisted"
+title: "Missing Version Document"
+groups:
+  - id: TST
+    title: Testing
+    description: Guidelines for testing.
+guidelines:
+  - id: "TST.01"
+    title: "Test guideline"
+    objective: "Verify missing version is caught."
+    group: "TST"
+    statements:
+      - id: "TST.01.01"
+        title: "Statement"
+        text: "Placeholder statement."

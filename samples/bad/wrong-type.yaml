@@ -1,0 +1,12 @@
+metadata:
+  id: wrong-type-doc
+  type: InvalidDocumentType
+  gemara-version: "1.3.0"
+  description: "Document with unrecognized metadata.type"
+  author:
+    id: "test-org"
+    name: "Test Organization"
+    type: "Software Assisted"
+title: "Wrong Type Document"
+groups: []
+guidelines: []

@@ -1,0 +1,30 @@
+metadata:
+  id: test-security-standards
+  type: GuidanceCatalog
+  gemara-version: "1.3.0"
+  description: "Synthetic security standards for integration testing"
+  author:
+    id: "test-org"
+    name: "Test Organization"
+    type: "Software Assisted"
+  version: "1.0.0"
+title: "Test Security Standards"
+type: "Standard"
+front-matter: |
+  Synthetic test document. Not real guidance.
+groups:
+  - id: TST
+    title: Testing
+    description: Guidelines for testing activities.
+  - id: SEC
+    title: Security
+    description: Guidelines for security testing.
+guidelines:
+  - id: "TST.SEC.01"
+    title: "Test guideline"
+    objective: "Verify evidence pipeline accepts well-formed catalogs."
+    group: "TST"
+    statements:
+      - id: "TST.SEC.01.01"
+        title: "Sample Statement"
+        text: "Systems must be tested with synthetic data before production use."

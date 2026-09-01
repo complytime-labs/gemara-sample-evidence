@@ -1,0 +1,11 @@
+metadata:
+  id: missing-type-doc
+  gemara-version: "1.3.0"
+  description: "Document missing metadata.type field"
+  author:
+    id: "test-org"
+    name: "Test Organization"
+    type: "Software Assisted"
+title: "Missing Type Document"
+groups: []
+guidelines: []
