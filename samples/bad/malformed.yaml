@@ -1,0 +1,15 @@
+metadata:
+  id: malformed-doc
+  type: GuidanceCatalog
+  gemara-version: "1.3.0"
+  description: "This YAML is intentionally broken
+  author:
+    id: "test-org"
+    name: [unclosed bracket
+title: "Malformed Document"
+  unexpected-indent: true
+groups:
+  - id: TST
+    title:
+      - nested: wrong
+    description

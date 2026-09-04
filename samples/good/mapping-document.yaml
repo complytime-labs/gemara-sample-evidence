@@ -1,0 +1,30 @@
+title: Test Standards to Test Framework Mapping
+metadata:
+  id: TST-FRM-MAP-001
+  type: MappingDocument
+  gemara-version: "1.3.0"
+  description: "Synthetic mapping document for integration testing"
+  author:
+    id: test-org
+    name: Test Organization
+    type: Software Assisted
+  mapping-references:
+    - id: TST
+      title: Test Standards
+      version: 1.0.0
+    - id: FRM
+      title: Test Framework
+      version: 1.0.0
+source-reference:
+  reference-id: TST
+  entry-type: Statement
+target-reference:
+  reference-id: FRM
+  entry-type: Guideline
+mappings:
+  - id: tst-sec-01-01
+    source: TST.SEC.01.01
+    relationship: relates-to
+    targets:
+      - entry-id: Section 1.1
+      - entry-id: Section 2.3
