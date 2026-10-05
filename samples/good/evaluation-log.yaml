@@ -1,0 +1,29 @@
+metadata:
+  id: test-evaluation-log-001
+  type: EvaluationLog
+  gemara-version: "1.3.0"
+  description: "Synthetic evaluation log for integration testing"
+  author:
+    id: "test-org"
+    name: "Test Organization"
+    type: "Software Assisted"
+result: Passed
+target:
+  id: test-application
+  name: "Test Application"
+  type: Software
+evaluations:
+  - name: encryption at rest
+    control:
+      reference-id: TST-CTRL
+      entry-id: TST-ENC-01
+    result: Passed
+    message: "Verified encryption enabled on storage backend"
+    assessment-logs: []
+  - name: transport security
+    control:
+      reference-id: TST-CTRL
+      entry-id: TST-TLS-01
+    result: Passed
+    message: "Verified TLS required for all connections"
+    assessment-logs: []

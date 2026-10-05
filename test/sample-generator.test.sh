@@ -87,6 +87,41 @@ assert isinstance(doc.get("mappings"), list) and len(doc["mappings"]) > 0, "mapp
 PY
 assert_eq "good/mapping-document parses with correct fields" "0" "$?"
 
+# EvaluationLog: exists, parses, has required fields
+assert_file_exists "good/evaluation-log exists" "$GOOD_DIR/evaluation-log.yaml"
+
+python3 - "$GOOD_DIR/evaluation-log.yaml" <<'PY'
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+assert isinstance(doc, dict), "not a YAML mapping"
+m = doc.get("metadata", {})
+assert m.get("type") == "EvaluationLog", f"type: {m.get('type')}"
+assert m.get("gemara-version") == "1.3.0", f"version: {m.get('gemara-version')}"
+assert m.get("id"), "missing metadata.id"
+assert doc.get("result"), "missing result"
+assert doc.get("target"), "missing target"
+assert isinstance(doc.get("evaluations"), list) and len(doc["evaluations"]) > 0, "evaluations empty"
+PY
+assert_eq "good/evaluation-log parses with correct fields" "0" "$?"
+
+# Policy: exists, parses, has required fields
+assert_file_exists "good/policy exists" "$GOOD_DIR/policy.yaml"
+
+python3 - "$GOOD_DIR/policy.yaml" <<'PY'
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+assert isinstance(doc, dict), "not a YAML mapping"
+m = doc.get("metadata", {})
+assert m.get("type") == "Policy", f"type: {m.get('type')}"
+assert m.get("gemara-version") == "1.3.0", f"version: {m.get('gemara-version')}"
+assert m.get("id"), "missing metadata.id"
+assert doc.get("title"), "missing title"
+assert doc.get("contacts"), "missing contacts"
+PY
+assert_eq "good/policy parses with correct fields" "0" "$?"
+
 # ---------------------------------------------------------------------------
 # Bad files: exist and have expected defects
 # ---------------------------------------------------------------------------
@@ -112,7 +147,7 @@ with open(sys.argv[1]) as fh:
     doc = yaml.safe_load(fh)
 m = doc.get("metadata", {})
 t = m.get("type", "")
-assert t not in ("GuidanceCatalog", "MappingDocument"), f"type should be invalid, got: {t}"
+assert t not in ("GuidanceCatalog", "MappingDocument", "EvaluationLog", "Policy"), f"type should be invalid, got: {t}"
 assert t, "type should exist but be wrong"
 PY
 assert_eq "bad/wrong-type has invalid metadata.type" "0" "$?"
@@ -147,6 +182,37 @@ m = doc.get("metadata", {})
 assert "gemara-version" not in m, f"expected no gemara-version, found: {m.get('gemara-version')}"
 PY
 assert_eq "bad/missing-version lacks gemara-version" "0" "$?"
+
+# missing-required: valid YAML with metadata.type but missing required body fields
+assert_file_exists "bad/missing-required exists" "$BAD_DIR/missing-required.yaml"
+
+python3 - "$BAD_DIR/missing-required.yaml" <<'PY'
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+assert isinstance(doc, dict), "not a YAML mapping"
+m = doc.get("metadata", {})
+assert m.get("type") == "EvaluationLog", f"type should be EvaluationLog, got: {m.get('type')}"
+assert "target" not in doc, f"expected no target, found: {doc.get('target')}"
+assert "evaluations" not in doc, f"expected no evaluations, found: {doc.get('evaluations')}"
+assert "description" not in m, f"expected no description, found: {m.get('description')}"
+assert "author" not in m, f"expected no author, found: {m.get('author')}"
+PY
+assert_eq "bad/missing-required has type but lacks required body fields" "0" "$?"
+
+# truncated: not parseable as YAML (cut off mid-value)
+assert_file_exists "bad/truncated exists" "$BAD_DIR/truncated.yaml"
+
+if python3 -c "
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    yaml.safe_load(fh)
+" "$BAD_DIR/truncated.yaml" 2>/dev/null; then
+	echo "FAIL: bad/truncated should not parse as valid YAML" >&2
+	fail=$((fail + 1))
+else
+	pass=$((pass + 1))
+fi
 
 # oversized: exceeds MAX_FILE_SIZE
 assert_file_exists "bad/oversized exists" "$BAD_DIR/oversized.yaml"

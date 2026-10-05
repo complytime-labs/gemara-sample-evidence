@@ -1,0 +1,15 @@
+metadata:
+  id: test-policy-001
+  type: Policy
+  gemara-version: "1.3.0"
+  description: "Synthetic security policy for integration testing"
+  author:
+    id: "test-org"
+    name: "Test Organization"
+    type: "Software Assisted"
+title: "Test Data Protection Policy"
+contacts:
+  responsible:
+    - name: "Test Security Lead"
+  accountable:
+    - name: "Test Security Director"

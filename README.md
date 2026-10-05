@@ -7,13 +7,17 @@ The `gemara-sample-evidence` repository is a collection of tooling and versioned
 ```
 samples/
   good/                       # well-formed Gemara documents
-    guidance-catalog.yaml
-    mapping-document.yaml
+    evaluation-log.yaml         # EvaluationLog with evaluations
+    guidance-catalog.yaml       # GuidanceCatalog with groups and guidelines
+    mapping-document.yaml       # MappingDocument with source/target mappings
+    policy.yaml                 # Policy with title and RACI contacts
   bad/                        # intentionally defective documents
     empty.yaml                  # 0-byte file
     malformed.yaml              # unparseable YAML
+    missing-required.yaml       # valid type but missing required body fields
     missing-type.yaml           # no metadata.type
     missing-version.yaml        # no metadata.gemara-version
+    truncated.yaml              # YAML cut off mid-value
     wrong-type.yaml             # unrecognized metadata.type
 scripts/
   generate-samples.sh          # assembles fixtures + dynamic files into .test-output/samples/
