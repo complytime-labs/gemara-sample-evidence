@@ -225,6 +225,76 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# CUE schema validation: good samples must pass, typed bad samples must fail
+# ---------------------------------------------------------------------------
+
+# Map artifact type to CUE definition name
+cue_def_for_type() {
+	case "$1" in
+		GuidanceCatalog)  echo "#GuidanceCatalog" ;;
+		MappingDocument)  echo "#MappingDocument" ;;
+		EvaluationLog)    echo "#EvaluationLog" ;;
+		Policy)           echo "#Policy" ;;
+		ControlCatalog)   echo "#ControlCatalog" ;;
+		ThreatCatalog)    echo "#ThreatCatalog" ;;
+		RiskCatalog)      echo "#RiskCatalog" ;;
+		EnforcementLog)   echo "#EnforcementLog" ;;
+		AuditLog)         echo "#AuditLog" ;;
+		*)                echo "" ;;
+	esac
+}
+
+GEMARA_CUE_VERSION="${GEMARA_CUE_VERSION:-v1.3.0}"
+
+if command -v cue >/dev/null 2>&1; then
+	# Good samples: each must pass CUE schema validation
+	for f in "$GOOD_DIR"/*.yaml; do
+		fname="$(basename "$f")"
+		# Extract metadata.type from the file
+		art_type=$(python3 -c "
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+print(doc.get('metadata', {}).get('type', ''))" "$f" 2>/dev/null || true)
+		cue_def="$(cue_def_for_type "$art_type")"
+		if [ -z "$cue_def" ]; then
+			echo "WARN: good/$fname: unknown type '$art_type', skipping CUE validation" >&2
+			continue
+		fi
+		if cue vet -c -d "$cue_def" "github.com/gemaraproj/gemara@${GEMARA_CUE_VERSION}" "$f" 2>/dev/null; then
+			pass=$((pass + 1))
+		else
+			echo "FAIL: good/$fname does not pass CUE schema validation (${cue_def})" >&2
+			fail=$((fail + 1))
+		fi
+	done
+
+	# Bad samples with a valid metadata.type: must FAIL CUE schema validation
+	for f in "$BAD_DIR"/*.yaml; do
+		fname="$(basename "$f")"
+		art_type=$(python3 -c "
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+print(doc.get('metadata', {}).get('type', ''))" "$f" 2>/dev/null || true)
+		cue_def="$(cue_def_for_type "$art_type")"
+		# Only validate bad samples that claim a recognized type
+		if [ -z "$cue_def" ]; then
+			continue
+		fi
+		if cue vet -c -d "$cue_def" "github.com/gemaraproj/gemara@${GEMARA_CUE_VERSION}" "$f" 2>/dev/null; then
+			echo "FAIL: bad/$fname should not pass CUE schema validation (${cue_def})" >&2
+			fail=$((fail + 1))
+		else
+			pass=$((pass + 1))
+		fi
+	done
+else
+	echo "WARN: cue not found; skipping CUE schema validation tests" >&2
+	echo "      Install: go install cuelang.org/go/cmd/cue@latest" >&2
+fi
+
+# ---------------------------------------------------------------------------
 # Static fixtures: output matches checked-in fixtures byte-for-byte
 # ---------------------------------------------------------------------------
 

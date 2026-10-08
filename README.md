@@ -45,7 +45,7 @@ The generator copies static fixtures and produces runtime-dependent files
 
 ```sh
 make generate          # output in .test-output/samples/
-make test              # run unit tests (requires python3 + PyYAML)
+make test              # run unit tests (requires python3 + PyYAML; cue for schema validation)
 make clean             # remove .test-output/
 ```
 
@@ -68,6 +68,7 @@ bash vendor/sample-evidence/scripts/generate-samples.sh
 | `SAMPLE_DIR` | `.test-output/samples` | Output directory for assembled samples |
 | `MAX_FILE_SIZE` | `102400` | Byte threshold for oversized bad sample |
 | `GENERATE_SAMPLES_LIB_ONLY` | unset | Set to `1` to source functions without running |
+| `GEMARA_CUE_VERSION` | `v1.3.0` | Gemara schema version for CUE validation |
 
 ## Sanitization
 
