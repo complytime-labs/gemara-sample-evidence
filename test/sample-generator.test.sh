@@ -87,6 +87,41 @@ assert isinstance(doc.get("mappings"), list) and len(doc["mappings"]) > 0, "mapp
 PY
 assert_eq "good/mapping-document parses with correct fields" "0" "$?"
 
+# EvaluationLog: exists, parses, has required fields
+assert_file_exists "good/evaluation-log exists" "$GOOD_DIR/evaluation-log.yaml"
+
+python3 - "$GOOD_DIR/evaluation-log.yaml" <<'PY'
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+assert isinstance(doc, dict), "not a YAML mapping"
+m = doc.get("metadata", {})
+assert m.get("type") == "EvaluationLog", f"type: {m.get('type')}"
+assert m.get("gemara-version") == "1.3.0", f"version: {m.get('gemara-version')}"
+assert m.get("id"), "missing metadata.id"
+assert doc.get("result"), "missing result"
+assert doc.get("target"), "missing target"
+assert isinstance(doc.get("evaluations"), list) and len(doc["evaluations"]) > 0, "evaluations empty"
+PY
+assert_eq "good/evaluation-log parses with correct fields" "0" "$?"
+
+# Policy: exists, parses, has required fields
+assert_file_exists "good/policy exists" "$GOOD_DIR/policy.yaml"
+
+python3 - "$GOOD_DIR/policy.yaml" <<'PY'
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+assert isinstance(doc, dict), "not a YAML mapping"
+m = doc.get("metadata", {})
+assert m.get("type") == "Policy", f"type: {m.get('type')}"
+assert m.get("gemara-version") == "1.3.0", f"version: {m.get('gemara-version')}"
+assert m.get("id"), "missing metadata.id"
+assert doc.get("title"), "missing title"
+assert doc.get("contacts"), "missing contacts"
+PY
+assert_eq "good/policy parses with correct fields" "0" "$?"
+
 # ---------------------------------------------------------------------------
 # Bad files: exist and have expected defects
 # ---------------------------------------------------------------------------
@@ -112,7 +147,7 @@ with open(sys.argv[1]) as fh:
     doc = yaml.safe_load(fh)
 m = doc.get("metadata", {})
 t = m.get("type", "")
-assert t not in ("GuidanceCatalog", "MappingDocument"), f"type should be invalid, got: {t}"
+assert t not in ("GuidanceCatalog", "MappingDocument", "EvaluationLog", "Policy"), f"type should be invalid, got: {t}"
 assert t, "type should exist but be wrong"
 PY
 assert_eq "bad/wrong-type has invalid metadata.type" "0" "$?"
@@ -148,6 +183,37 @@ assert "gemara-version" not in m, f"expected no gemara-version, found: {m.get('g
 PY
 assert_eq "bad/missing-version lacks gemara-version" "0" "$?"
 
+# missing-required: valid YAML with metadata.type but missing required body fields
+assert_file_exists "bad/missing-required exists" "$BAD_DIR/missing-required.yaml"
+
+python3 - "$BAD_DIR/missing-required.yaml" <<'PY'
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+assert isinstance(doc, dict), "not a YAML mapping"
+m = doc.get("metadata", {})
+assert m.get("type") == "EvaluationLog", f"type should be EvaluationLog, got: {m.get('type')}"
+assert "target" not in doc, f"expected no target, found: {doc.get('target')}"
+assert "evaluations" not in doc, f"expected no evaluations, found: {doc.get('evaluations')}"
+assert "description" not in m, f"expected no description, found: {m.get('description')}"
+assert "author" not in m, f"expected no author, found: {m.get('author')}"
+PY
+assert_eq "bad/missing-required has type but lacks required body fields" "0" "$?"
+
+# truncated: not parseable as YAML (cut off mid-value)
+assert_file_exists "bad/truncated exists" "$BAD_DIR/truncated.yaml"
+
+if python3 -c "
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    yaml.safe_load(fh)
+" "$BAD_DIR/truncated.yaml" 2>/dev/null; then
+	echo "FAIL: bad/truncated should not parse as valid YAML" >&2
+	fail=$((fail + 1))
+else
+	pass=$((pass + 1))
+fi
+
 # oversized: exceeds MAX_FILE_SIZE
 assert_file_exists "bad/oversized exists" "$BAD_DIR/oversized.yaml"
 size=$(wc -c <"$BAD_DIR/oversized.yaml" | tr -d ' ')
@@ -156,6 +222,76 @@ if [ "$size" -gt "$MAX_FILE_SIZE" ]; then
 else
 	echo "FAIL: bad/oversized is $size bytes, expected > $MAX_FILE_SIZE" >&2
 	fail=$((fail + 1))
+fi
+
+# ---------------------------------------------------------------------------
+# CUE schema validation: good samples must pass, typed bad samples must fail
+# ---------------------------------------------------------------------------
+
+# Map artifact type to CUE definition name
+cue_def_for_type() {
+	case "$1" in
+		GuidanceCatalog)  echo "#GuidanceCatalog" ;;
+		MappingDocument)  echo "#MappingDocument" ;;
+		EvaluationLog)    echo "#EvaluationLog" ;;
+		Policy)           echo "#Policy" ;;
+		ControlCatalog)   echo "#ControlCatalog" ;;
+		ThreatCatalog)    echo "#ThreatCatalog" ;;
+		RiskCatalog)      echo "#RiskCatalog" ;;
+		EnforcementLog)   echo "#EnforcementLog" ;;
+		AuditLog)         echo "#AuditLog" ;;
+		*)                echo "" ;;
+	esac
+}
+
+GEMARA_CUE_VERSION="${GEMARA_CUE_VERSION:-v1.3.0}"
+
+if command -v cue >/dev/null 2>&1; then
+	# Good samples: each must pass CUE schema validation
+	for f in "$GOOD_DIR"/*.yaml; do
+		fname="$(basename "$f")"
+		# Extract metadata.type from the file
+		art_type=$(python3 -c "
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+print(doc.get('metadata', {}).get('type', ''))" "$f" 2>/dev/null || true)
+		cue_def="$(cue_def_for_type "$art_type")"
+		if [ -z "$cue_def" ]; then
+			echo "WARN: good/$fname: unknown type '$art_type', skipping CUE validation" >&2
+			continue
+		fi
+		if cue vet -c -d "$cue_def" "github.com/gemaraproj/gemara@${GEMARA_CUE_VERSION}" "$f" 2>/dev/null; then
+			pass=$((pass + 1))
+		else
+			echo "FAIL: good/$fname does not pass CUE schema validation (${cue_def})" >&2
+			fail=$((fail + 1))
+		fi
+	done
+
+	# Bad samples with a valid metadata.type: must FAIL CUE schema validation
+	for f in "$BAD_DIR"/*.yaml; do
+		fname="$(basename "$f")"
+		art_type=$(python3 -c "
+import sys, yaml
+with open(sys.argv[1]) as fh:
+    doc = yaml.safe_load(fh)
+print(doc.get('metadata', {}).get('type', ''))" "$f" 2>/dev/null || true)
+		cue_def="$(cue_def_for_type "$art_type")"
+		# Only validate bad samples that claim a recognized type
+		if [ -z "$cue_def" ]; then
+			continue
+		fi
+		if cue vet -c -d "$cue_def" "github.com/gemaraproj/gemara@${GEMARA_CUE_VERSION}" "$f" 2>/dev/null; then
+			echo "FAIL: bad/$fname should not pass CUE schema validation (${cue_def})" >&2
+			fail=$((fail + 1))
+		else
+			pass=$((pass + 1))
+		fi
+	done
+else
+	echo "WARN: cue not found; skipping CUE schema validation tests" >&2
+	echo "      Install: go install cuelang.org/go/cmd/cue@latest" >&2
 fi
 
 # ---------------------------------------------------------------------------

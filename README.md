@@ -7,13 +7,17 @@ The `gemara-sample-evidence` repository is a collection of tooling and versioned
 ```
 samples/
   good/                       # well-formed Gemara documents
-    guidance-catalog.yaml
-    mapping-document.yaml
+    evaluation-log.yaml         # EvaluationLog with evaluations
+    guidance-catalog.yaml       # GuidanceCatalog with groups and guidelines
+    mapping-document.yaml       # MappingDocument with source/target mappings
+    policy.yaml                 # Policy with title and RACI contacts
   bad/                        # intentionally defective documents
     empty.yaml                  # 0-byte file
     malformed.yaml              # unparseable YAML
+    missing-required.yaml       # valid type but missing required body fields
     missing-type.yaml           # no metadata.type
     missing-version.yaml        # no metadata.gemara-version
+    truncated.yaml              # YAML cut off mid-value
     wrong-type.yaml             # unrecognized metadata.type
 scripts/
   generate-samples.sh          # assembles fixtures + dynamic files into .test-output/samples/
@@ -41,7 +45,7 @@ The generator copies static fixtures and produces runtime-dependent files
 
 ```sh
 make generate          # output in .test-output/samples/
-make test              # run unit tests (requires python3 + PyYAML)
+make test              # run unit tests (requires python3 + PyYAML; cue for schema validation)
 make clean             # remove .test-output/
 ```
 
@@ -64,6 +68,7 @@ bash vendor/sample-evidence/scripts/generate-samples.sh
 | `SAMPLE_DIR` | `.test-output/samples` | Output directory for assembled samples |
 | `MAX_FILE_SIZE` | `102400` | Byte threshold for oversized bad sample |
 | `GENERATE_SAMPLES_LIB_ONLY` | unset | Set to `1` to source functions without running |
+| `GEMARA_CUE_VERSION` | `v1.3.0` | Gemara schema version for CUE validation |
 
 ## Sanitization
 

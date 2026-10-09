@@ -37,12 +37,16 @@ MAX_FILE_SIZE="${MAX_FILE_SIZE:-102400}"
 copy_fixtures() {
 	cp "${FIXTURES_DIR}/good/guidance-catalog.yaml" "${GOOD_DIR}/guidance-catalog.yaml"
 	cp "${FIXTURES_DIR}/good/mapping-document.yaml" "${GOOD_DIR}/mapping-document.yaml"
+	cp "${FIXTURES_DIR}/good/evaluation-log.yaml"   "${GOOD_DIR}/evaluation-log.yaml"
+	cp "${FIXTURES_DIR}/good/policy.yaml"            "${GOOD_DIR}/policy.yaml"
 
 	cp "${FIXTURES_DIR}/bad/missing-type.yaml"      "${BAD_DIR}/missing-type.yaml"
 	cp "${FIXTURES_DIR}/bad/wrong-type.yaml"         "${BAD_DIR}/wrong-type.yaml"
 	cp "${FIXTURES_DIR}/bad/malformed.yaml"          "${BAD_DIR}/malformed.yaml"
 	cp "${FIXTURES_DIR}/bad/empty.yaml"              "${BAD_DIR}/empty.yaml"
 	cp "${FIXTURES_DIR}/bad/missing-version.yaml"    "${BAD_DIR}/missing-version.yaml"
+	cp "${FIXTURES_DIR}/bad/missing-required.yaml"   "${BAD_DIR}/missing-required.yaml"
+	cp "${FIXTURES_DIR}/bad/truncated.yaml"          "${BAD_DIR}/truncated.yaml"
 }
 
 # ---------------------------------------------------------------------------

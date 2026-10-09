@@ -1,0 +1,55 @@
+metadata:
+  id: test-evaluation-log-001
+  type: EvaluationLog
+  gemara-version: "1.3.0"
+  description: "Synthetic evaluation log for integration testing"
+  author:
+    id: "test-org"
+    name: "Test Organization"
+    type: "Software Assisted"
+result: Passed
+target:
+  id: test-application
+  name: "Test Application"
+  type: Software
+evaluations:
+  - name: encryption at rest
+    control:
+      reference-id: TST-CTRL
+      entry-id: TST-ENC-01
+    result: Passed
+    message: "Verified encryption enabled on storage backend"
+    assessment-logs:
+      - requirement:
+          reference-id: TST-CTRL
+          entry-id: TST-ENC-01-AR-01
+        description: "Check storage backend encryption configuration"
+        result: Passed
+        message: "AES-256 encryption enabled on all volumes"
+        applicability:
+          - "cloud-storage"
+        steps:
+          - "Retrieve encryption configuration from storage API"
+          - "Verify algorithm is AES-256"
+        start: "2026-01-15T10:00:00Z"
+        end: "2026-01-15T10:05:00Z"
+  - name: transport security
+    control:
+      reference-id: TST-CTRL
+      entry-id: TST-TLS-01
+    result: Passed
+    message: "Verified TLS required for all connections"
+    assessment-logs:
+      - requirement:
+          reference-id: TST-CTRL
+          entry-id: TST-TLS-01-AR-01
+        description: "Check TLS enforcement on all endpoints"
+        result: Passed
+        message: "TLS 1.2+ enforced on all listener endpoints"
+        applicability:
+          - "network-endpoints"
+        steps:
+          - "Enumerate all listener endpoints"
+          - "Verify minimum TLS version is 1.2"
+        start: "2026-01-15T10:10:00Z"
+        end: "2026-01-15T10:12:00Z"
